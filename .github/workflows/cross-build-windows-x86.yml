@@ -21,7 +21,7 @@ jobs:
         run: |
           git clone https://github.com/psi-im/psi.git
           cd psi
-          git checkout v0.16 # замените на нужную версию
+          git checkout v0.15 # замените на нужную версию
 
       - name: Install cross toolchain and cmake
         run: |
