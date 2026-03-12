@@ -1,40 +1,55 @@
-name: Build StopSpamPlugin (Windows x64)
+name: Build stopspamplugin for Windows (MXE)
 
 on:
   workflow_dispatch:
   push:
-    paths: 
+    paths:
       - 'generic/stopspamplugin/**'
-      - '.github/workflows/build-stopspamplugin-windows-x86_64.yml'
+      - '.github/workflows/build-stopspamplugin-windows.yml'
   pull_request:
-    paths: 
+    paths:
       - 'generic/stopspamplugin/**'
-      - '.github/workflows/build-stopspamplugin-windows-x86_64.yml'
+      - '.github/workflows/build-stopspamplugin-windows.yml'
 
 jobs:
-  build:
-    runs-on: windows-latest
+  build-windows:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install MSYS2 with Qt5, GCC, CMake (x86_64)
-        uses: msys2/setup-msys2@v2
-        with:
-          install: mingw-w64-x86_64-qt5-base mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake
-
-      - name: Build stopspamplugin (MSYS2 x86_64)
-        shell: msys2 {0}
-        working-directory: ${{ github.workspace }}/generic/stopspamplugin
+      - name: Install MXE toolchain
         run: |
-          mkdir -p build
-          cd build
-          cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-          mingw32-make
+          sudo apt-get update
+          sudo apt-get install -y mxe
+          # альтернативный способ, если пакет недоступен:
+          # git clone https://github.com/mxe/mxe.git
+          # cd mxe
+          # make gcc cmake qt5
 
-      - name: Upload build artifact
+      - name: Checkout plugins repo at specific commit
+        uses: actions/checkout@v3
+        with:
+          repository: psi-im/plugins
+          ref: ce031b193992c574ad3e31a0026b363e1f8fc136
+
+      - name: Checkout psi repo for dev headers (if needed)
+        run: |
+          git clone https://github.com/psi-im/psi.git
+          cd psi
+          git checkout v0.16
+
+      - name: Build stopspamplugin for Windows using MXE
+        env:
+          TARGET: windows64
+          BUILD_DEV_PLUGINS: OFF
+        run: |
+          # Сборочный скрипт как в README и build-for-windows.sh
+          cd tests/travis-ci
+          ./build-for-windows.sh
+          # Артефакт будет лежать в builddir/generic/stopspamplugin/<DLL-файл>
+          ls ../builddir/generic/stopspamplugin
+
+      - name: Upload DLL artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stopspamplugin-windows-x86_64
-          path: ${{ github.workspace }}/generic/stopspamplugin/build/*.dll
+          name: stopspamplugin-windows
+          path: builddir/generic/stopspamplugin/*.dll
