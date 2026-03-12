@@ -1,0 +1,61 @@
+name: Build stopspamplugin for Windows x86 (MXE cross-build)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'generic/stopspamplugin/**'
+      - '.github/workflows/build-stopspamplugin-windows-x86.yml'
+  pull_request:
+    paths:
+      - 'generic/stopspamplugin/**'
+      - '.github/workflows/build-stopspamplugin-windows-x86.yml'
+
+jobs:
+  build-windows-x86:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install MXE toolchain from source
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git make autoconf automake gperf cmake libtool \
+            flex bison pkg-config g++ \
+            python perl yasm wget unzip
+          git clone https://github.com/mxe/mxe.git
+          cd mxe
+          make i686-w64-mingw32.shared cmake qt5
+
+      - name: Checkout plugins repo at specific commit
+        uses: actions/checkout@v3
+        with:
+          repository: psi-im/plugins
+          ref: ce031b193992c574ad3e31a0026b363e1f8fc136
+
+      - name: Checkout psi repo for dev headers (if needed)
+        run: |
+          git clone https://github.com/psi-im/psi.git
+          cd psi
+          git checkout v0.16
+
+      - name: Build stopspamplugin for Windows x86 using MXE toolchain
+        env:
+          BUILD_DEV_PLUGINS: OFF
+        run: |
+          export PATH="$PWD/mxe/usr/bin:$PATH"
+          export PREFIX="i686-w64-mingw32.shared"
+          mkdir -p builddir
+          cd builddir
+          ${PREFIX}-cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_PLUGINS=stopspamplugin \
+            -DPLUGINS_ROOT_DIR="$PWD/../psi/plugins" \
+            -DBUILD_DEV_PLUGINS=${BUILD_DEV_PLUGINS}
+          make -j$(nproc)
+          ls generic/stopspamplugin
+
+      - name: Upload DLL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stopspamplugin-windows-x86
+          path: builddir/generic/stopspamplugin/*.dll
