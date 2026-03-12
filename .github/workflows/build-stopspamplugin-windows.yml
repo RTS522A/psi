@@ -1,0 +1,40 @@
+name: Build StopSpamPlugin (Windows)
+
+on:
+  push:
+    paths:
+      - 'generic/stopspamplugin/**'
+      - '.github/workflows/build-stopspamplugin-windows.yml'
+  pull_request:
+    paths:
+      - 'generic/stopspamplugin/**'
+      - '.github/workflows/build-stopspamplugin-windows.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Qt (msys2)
+        uses: msys2/setup-msys2@v4
+        with:
+          install: mingw-w64-x86_64-qt5 mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake
+
+      - name: Build stopspamplugin (MSYS2)
+        shell: msys2 {0}
+        working-directory: generic/stopspamplugin
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -G "MinGW Makefiles"
+          mingw32-make
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stopspamplugin-windows
+          path: generic/stopspamplugin/build/*.dll
