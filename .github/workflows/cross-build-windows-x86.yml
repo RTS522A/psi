@@ -1,4 +1,4 @@
-name: Cross-build StopSpamPlugin for Windows x86 (specific commit)
+name: Cross-build StopSpamPlugin for Windows x86 (specific commit, with API headers)
 
 on:
   workflow_dispatch:
@@ -17,6 +17,12 @@ jobs:
           cd plugins
           git checkout ce031b193992c574ad3e31a0026b363e1f8fc136
 
+      - name: Clone psi-im (for dev headers/libs)
+        run: |
+          git clone https://github.com/psi-im/psi.git
+          cd psi
+          git checkout v0.16 # замените на нужную версию
+
       - name: Install cross toolchain and cmake
         run: |
           sudo apt-get update
@@ -24,6 +30,8 @@ jobs:
 
       - name: Build stopspamplugin (cross x86)
         run: |
+          export PsiPluginsApi_DIR=$PWD/psi/plugins/api
+          export PsiPluginsApi_INCLUDE_DIR=$PWD/psi/plugins/api
           cd plugins/generic/stopspamplugin
           mkdir -p build
           cd build
@@ -32,6 +40,8 @@ jobs:
             -DCMAKE_C_COMPILER=i686-w64-mingw32-gcc \
             -DCMAKE_CXX_COMPILER=i686-w64-mingw32-g++ \
             -DCMAKE_BUILD_TYPE=Release \
+            -DPsiPluginsApi_DIR=$PsiPluginsApi_DIR \
+            -DPsiPluginsApi_INCLUDE_DIR=$PsiPluginsApi_INCLUDE_DIR \
             -G "Unix Makefiles"
           make
 
