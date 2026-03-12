@@ -34,6 +34,12 @@ jobs:
           pacman -Ss mingw-w64-i686-qt
           echo "==== mingw-w64-i686-qt5* ===="
           pacman -Ss mingw-w64-i686-qt5
+
+      - name: List available Qt packages (mingw-w64-x86_64)
+        shell: msys2 {0}
+        env:
+          MSYSTEM: MINGW64
+        run: |
           echo "==== mingw-w64-x86_64-qt* ===="
           pacman -Ss mingw-w64-x86_64-qt
           echo "==== mingw-w64-x86_64-qt5* ===="
