@@ -1,0 +1,52 @@
+name: Cross-build StopSpamPlugin for Windows x86
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'generic/stopspamplugin/**'
+      - '.github/workflows/cross-build-windows-x86.yml'
+  pull_request:
+    paths:
+      - 'generic/stopspamplugin/**'
+      - '.github/workflows/cross-build-windows-x86.yml'
+
+jobs:
+  cross-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup cross toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 cmake
+
+      - name: Print Mingw versions
+        run: |
+          i686-w64-mingw32-gcc --version
+          x86_64-w64-mingw32-gcc --version
+
+      # НАШЛИ Qt5 для mingw? Если да - используйте CMAKE_PREFIX_PATH,
+      # если нет - кросс-сборку Qt5 нужно делать отдельно!
+
+      - name: Build stopspamplugin (cross x86)
+        run: |
+          mkdir -p generic/stopspamplugin/build
+          cd generic/stopspamplugin/build
+          cmake .. \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_C_COMPILER=i686-w64-mingw32-gcc \
+            -DCMAKE_CXX_COMPILER=i686-w64-mingw32-g++ \
+            # -DCMAKE_PREFIX_PATH=/path/to/qt5-mingw            # Если удалось собрать Qt5 для mingw вручную
+            -DCMAKE_BUILD_TYPE=Release \
+            -G "Unix Makefiles"
+          make
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stopspamplugin-cross-x86
+          path: generic/stopspamplugin/build/*.dll
