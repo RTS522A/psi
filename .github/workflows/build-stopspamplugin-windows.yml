@@ -1,15 +1,15 @@
-name: Build StopSpamPlugin (Windows x86)
+name: Build StopSpamPlugin (Windows x64)
 
 on:
   workflow_dispatch:
   push:
-    paths:
+    paths: 
       - 'generic/stopspamplugin/**'
-      - '.github/workflows/build-stopspamplugin-windows-x86.yml'
+      - '.github/workflows/build-stopspamplugin-windows-x86_64.yml'
   pull_request:
-    paths:
+    paths: 
       - 'generic/stopspamplugin/**'
-      - '.github/workflows/build-stopspamplugin-windows-x86.yml'
+      - '.github/workflows/build-stopspamplugin-windows-x86_64.yml'
 
 jobs:
   build:
@@ -19,12 +19,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install MSYS2 with Qt5, GCC, CMake (i686)
+      - name: Install MSYS2 with Qt5, GCC, CMake (x86_64)
         uses: msys2/setup-msys2@v2
         with:
-          install: mingw-w64-i686-qt5-base mingw-w64-i686-gcc mingw-w64-i686-cmake
+          install: mingw-w64-x86_64-qt5-base mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake
 
-      - name: Build stopspamplugin (MSYS2 x86)
+      - name: Build stopspamplugin (MSYS2 x86_64)
         shell: msys2 {0}
         working-directory: ${{ github.workspace }}/generic/stopspamplugin
         run: |
@@ -36,5 +36,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: stopspamplugin-windows-x86
+          name: stopspamplugin-windows-x86_64
           path: ${{ github.workspace }}/generic/stopspamplugin/build/*.dll
