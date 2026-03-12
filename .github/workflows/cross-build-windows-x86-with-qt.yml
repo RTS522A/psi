@@ -1,0 +1,73 @@
+name: Cross-build StopSpamPlugin for Windows x86 (with manual Qt5)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'generic/stopspamplugin/**'
+      - '.github/workflows/cross-build-windows-x86-with-qt.yml'
+  pull_request:
+    paths:
+      - 'generic/stopspamplugin/**'
+      - '.github/workflows/cross-build-windows-x86-with-qt.yml'
+
+jobs:
+  cross-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install build tools and dependencies for Qt5/MinGW
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 cmake perl python git build-essential libglib2.0-dev
+
+      - name: Download Qt5 source
+        run: |
+          git clone https://github.com/qt/qt5.git --branch 5.15 --depth 1
+          cd qt5
+          perl init-repository
+
+      - name: Configure and build Qt5 for mingw32 (i686) -- may take a LONG time!
+        run: |
+          export QTDIR=$HOME/qt5-mingw-install
+          mkdir -p $QTDIR
+          cd qt5
+          ./configure \
+            -xplatform win32-g++ \
+            -prefix $QTDIR \
+            -release \
+            -opensource \
+            -confirm-license \
+            -no-opengl \
+            -no-dbus \
+            -no-gtk \
+            -nomake examples \
+            -nomake tests \
+            -platform linux-g++ \
+            -hostprefix $QTDIR \
+            -device-option CROSS_COMPILE=i686-w64-mingw32-
+          make -j2
+          make install
+
+      - name: Build stopspamplugin using cross-compiled Qt5 (i686)
+        run: |
+          export QTDIR=$HOME/qt5-mingw-install
+          mkdir -p generic/stopspamplugin/build
+          cd generic/stopspamplugin/build
+          cmake .. \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -DCMAKE_C_COMPILER=i686-w64-mingw32-gcc \
+            -DCMAKE_CXX_COMPILER=i686-w64-mingw32-g++ \
+            -DCMAKE_PREFIX_PATH=$QTDIR \
+            -DCMAKE_BUILD_TYPE=Release \
+            -G "Unix Makefiles"
+          make
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stopspamplugin-cross-x86-with-qt
+          path: generic/stopspamplugin/build/*.dll
