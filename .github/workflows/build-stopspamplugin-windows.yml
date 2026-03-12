@@ -22,7 +22,7 @@ jobs:
       - name: Install MSYS2 with Qt5, GCC, CMake (i686)
         uses: msys2/setup-msys2@v2
         with:
-          install: mingw-w64-i686-qt5 mingw-w64-i686-gcc mingw-w64-i686-cmake
+          install: mingw-w64-i686-qt5-base mingw-w64-i686-gcc mingw-w64-i686-cmake
 
       - name: Build stopspamplugin (MSYS2 x86)
         shell: msys2 {0}
