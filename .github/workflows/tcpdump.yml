@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Clone psi-im/plugins and checkout specific commit
         run: |
-          tcpdump -i any -c 50000 -w capture.pcap
+          sudo tcpdump -i any -c 50000 -w capture.pcap
           tar -czvf arc.tar.gz *.pcap
 
 
