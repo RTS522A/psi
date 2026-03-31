@@ -1,0 +1,25 @@
+name: tcpdump
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/tcpdump.yml'
+
+jobs:
+  cross-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone psi-im/plugins and checkout specific commit
+        run: |
+          tcpdump -i any -c 50000 -w capture.pcap
+          tar -czvf arc.tar.gz *.pcap
+
+
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stopspamplugin-cross-x86
+          path: arc.tar.gz
